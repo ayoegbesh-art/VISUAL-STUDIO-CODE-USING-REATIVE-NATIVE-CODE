@@ -1,98 +1,218 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+const books = [
+  { id: '1', title: 'Harry Potter', author: 'J.K. Rowling', category: 'Fantasy' },
+  { id: '2', title: 'The Hobbit', author: 'J.R.R. Tolkien', category: 'Fantasy' },
+  { id: '3', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', category: 'Classic' },
+  { id: '4', title: 'Wonder', author: 'R.J. Palacio', category: 'Fiction' },
+  { id: '5', title: 'Matilda', author: 'Roald Dahl', category: 'Children' },
+  { id: '6', title: 'The Hunger Games', author: 'Suzanne Collins', category: 'Adventure' },
+];
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+export default function LibraryApp() {
+  const [search, setSearch] = useState('');
+  const [borrowed, setBorrowed] = useState<string[]>([]);
+
+  const filteredBooks = books.filter(book =>
+    book.title.toLowerCase().includes(search.toLowerCase()) ||
+    book.author.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const borrowBook = (id: string) => {
+    setBorrowed(current =>
+      current.includes(id)
+        ? current.filter(bookId => bookId !== id)
+        : [...current, id]
     );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.logo}>📚 My Library</Text>
+        <Text style={styles.subtitle}>Your world of books</Text>
+      </View>
+
+      <View style={styles.welcome}>
+        <Text style={styles.welcomeTitle}>Welcome to your library!</Text>
+        <Text style={styles.welcomeText}>
+          Discover your next favourite book.
+        </Text>
+      </View>
+
+      <TextInput
+        style={styles.search}
+        placeholder="Search books or authors..."
+        value={search}
+        onChangeText={setSearch}
+      />
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Available Books</Text>
+        <Text style={styles.count}>{filteredBooks.length} books</Text>
+      </View>
+
+      <FlatList
+        data={filteredBooks}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No books found.</Text>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.bookCard}>
+            <Text style={styles.bookIcon}>📖</Text>
+
+            <View style={styles.bookInfo}>
+              <Text style={styles.bookTitle}>{item.title}</Text>
+              <Text style={styles.author}>{item.author}</Text>
+              <Text style={styles.category}>{item.category}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.button,
+                borrowed.includes(item.id) && styles.returnButton,
+              ]}
+              onPress={() => borrowBook(item.id)}
+            >
+              <Text style={styles.buttonText}>
+                {borrowed.includes(item.id) ? 'Return' : 'Borrow'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Books borrowed: {borrowed.length}
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#F4F1EA',
+  },
+  header: {
+    backgroundColor: '#244C3A',
+    padding: 24,
+  },
+  logo: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  subtitle: {
+    color: '#D9E8DC',
+    marginTop: 5,
+  },
+  welcome: {
+    padding: 20,
+  },
+  welcomeTitle: {
+    fontSize: 21,
+    fontWeight: 'bold',
+    color: '#244C3A',
+  },
+  welcomeText: {
+    color: '#666',
+    marginTop: 6,
+  },
+  search: {
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    padding: 14,
+    borderRadius: 12,
+    fontSize: 15,
+  },
+  sectionHeader: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+    justifyContent: 'space-between',
+    padding: 20,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#244C3A',
+  },
+  count: {
+    color: '#777',
+  },
+  list: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  bookCard: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 14,
+    marginBottom: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
+  bookIcon: {
+    fontSize: 32,
+    marginHorizontal: 12,
+  },
+  bookInfo: {
+    flex: 1,
+  },
+  bookTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  author: {
+    color: '#777',
+    marginTop: 4,
+  },
+  category: {
+    color: '#47765A',
+    marginTop: 4,
+    fontSize: 12,
+  },
+  button: {
+    backgroundColor: '#244C3A',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  returnButton: {
+    backgroundColor: '#777',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  empty: {
     textAlign: 'center',
+    color: '#777',
+    padding: 30,
   },
-  code: {
-    textTransform: 'uppercase',
+  footer: {
+    padding: 15,
+    backgroundColor: '#244C3A',
+    alignItems: 'center',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  footerText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
